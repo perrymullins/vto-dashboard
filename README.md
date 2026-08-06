@@ -86,6 +86,31 @@ and are worth preserving in any future version:
 
 All of the caveats are collected on the dashboard's own **Data Notes** page.
 
+## What the QA pass found in the workbook itself
+
+Every one of the 2,206 extracted numbers was traced back to a cell in the source
+file, and each block's internal arithmetic was re-checked. The extraction is
+faithful; these are problems in the spreadsheet, all of them now carried as
+caveats on the relevant card and on the Data Notes page:
+
+| Where | What |
+|---|---|
+| **Population, ASA column** | Out of step with the Communities tab for 2017–2023 — each figure sits one year late. 2024 and 2025 agree. The TOTAL is a correct sum of its own row, so the earlier "individuals impacted" totals inherit the shift. |
+| **Diversity, clergy 2026** | Women 32.2% → 40.4% and POC 7.2% → 15.3% in one year. The implied roster shrinks sharply at the same time, which points to a change in who is counted. This is the figure most likely to be quoted. |
+| **Leadership, all three tiers** | The Women and POC percentages change denominator partway through — filled rectorships through 2020/2021, all churches after. It makes the older percentages read high; 2019's "15.4% POC" is 12.1% on the current basis. |
+| **Population, school totals** | The TOTALS row is not the sum of the school column before 2024-25; it is short by 168–273 students a year. |
+| **Communities, ASA 2019** | 22,888 here but 22,288 in the weekly-worship block on the same tab and in the Population tab. Probably a transposed 8 and 2 — and it is the pre-COVID baseline. |
+| **Communities, 2018 counts** | Components add to 253, the stated Total says 252. |
+| **Communities, growth %** | "% of Total Churches" implies 152–166 churches depending on the year; only 2025 matches the tab's own congregation count. |
+| **Wellness, antiracism 2017** | Lay 32 / Clergy 420 against 390/34 and 171/19 either side — the columns look transposed. |
+| **Other, transfers 2022** | 81 canonical transfers in, against a 3–24 range everywhere else. |
+| **Diversity, boards** | 2021 and 2025 sum to 99.5% rather than 100%. |
+
+The one extraction bug the pass found and fixed: UT Arlington, added to the
+Communities tab under "ANY NEW CAMPUS MISSIONS?" with no year header, had its
+own name read as a period. Its 25 now sits in 2024-25, and every year of the
+campus matrix reconciles exactly to the workbook's own campus total.
+
 ## Deploying
 
 Push to GitHub, then Settings → Pages → deploy from `main` / root. The page is
