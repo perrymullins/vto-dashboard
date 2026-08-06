@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>EDOT VTO Dashboard</title>
+<style>
+:root{
+  --navy:#1b2a4a; --navy-2:#24365c; --navy-deep:#13203b;
+  --gold:#c9a227; --gold-soft:#e2c662;
+  --red:#9e1b32;
+  --ink:#1d2433; --ink-2:#4a5468; --muted:#6b7385; --line:#e6e9f0;
+  --bg:#f4f6fa; --card:#ffffff; --card-2:#fbfcfe;
+  --good:#1f6b4a; --bad:#9e1b32;
+  --grid:#e6e9f0; --axis:#cbd2e0;
+  --untracked:rgba(107,115,133,.10);
+  --shadow:0 1px 2px rgba(20,33,61,.06),0 4px 16px rgba(20,33,61,.06);
+  --radius:14px;
+  --s1:#3750be; --s2:#0f7805; --s3:#0a91cd; --s4:#968c00;
+  --s5:#962369; --s6:#d25f19; --s7:#9164d2; --s8:#af321e;
+}
+@media (prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])){
+    --ink:#eef1f7; --ink-2:#aeb9d4; --muted:#8895b3; --line:#22304d;
+    --bg:#0d1422; --card:#141c2e; --card-2:#18213600;
+    --good:#4aa87d; --bad:#e0687c;
+    --grid:#22304d; --axis:#33415f;
+    --untracked:rgba(174,185,212,.10);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
+    --s1:#4863c6; --s2:#397b33; --s3:#039fe1; --s4:#9f962a;
+    --s5:#b73c84; --s6:#e76300; --s7:#8d57d5; --s8:#c03f2a;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#eef1f7; --ink-2:#aeb9d4; --muted:#8895b3; --line:#22304d;
+  --bg:#0d1422; --card:#141c2e; --card-2:#182136;
+  --good:#4aa87d; --bad:#e0687c;
+  --grid:#22304d; --axis:#33415f;
+  --untracked:rgba(174,185,212,.10);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
+  --s1:#4863c6; --s2:#397b33; --s3:#039fe1; --s4:#9f962a;
+  --s5:#b73c84; --s6:#e76300; --s7:#8d57d5; --s8:#c03f2a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:var(--s1);text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+.hidden{display:none!important}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--s3);outline-offset:2px}
+
+/* ---------------------------------------------------------------- gate */
+#gate{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(140deg,var(--navy-deep),var(--navy) 60%,#0f1a30);padding:20px}
+.gate-card{width:100%;max-width:420px;text-align:center;color:#fff}
+.gate-card img{height:52px;margin-bottom:22px}
+.gate-fallback{font-weight:800;font-size:24px;color:#fff;margin-bottom:22px;letter-spacing:.02em}
+.gate-fallback span{color:var(--gold-soft)}
+.gate-card h1{font-size:20px;margin-bottom:6px}
+.gate-card p{color:#aeb9d4;font-size:13px;margin:0 0 22px}
+.gate-row{display:flex;gap:8px}
+#gatePass{flex:1;min-width:0;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);
+  border-radius:10px;padding:11px 13px;color:#fff;font-size:14px}
+#gatePass::placeholder{color:#8895b3}
+#gatePass:focus{outline:none;background:rgba(255,255,255,.17);border-color:var(--gold-soft)}
+#gateBtn{background:var(--gold);border:none;border-radius:10px;padding:11px 20px;font-weight:700;color:#20180a}
+#gateBtn:hover{background:var(--gold-soft)}
+#gateBtn:disabled{opacity:.55;cursor:default}
+#gateMsg{margin-top:14px;font-size:13px;min-height:19px;color:#f0a8b4}
+#gateMsg.info{color:#aeb9d4}
+.gate-note{margin-top:26px;font-size:11.5px;color:#7d8bab;line-height:1.5}
+
+/* ---------------------------------------------------------------- chrome */
+.topstack{position:sticky;top:0;z-index:60}
+header.top{background:linear-gradient(120deg,var(--navy-deep),var(--navy));color:#fff;
+  padding:13px 26px;display:flex;align-items:center;gap:18px;box-shadow:0 2px 12px rgba(0,0,0,.18)}
+header.top .logo{height:36px;width:auto;display:block}
+header.top .logo-fallback{font-weight:800;font-size:17px;letter-spacing:.02em;color:#fff}
+header.top .logo-fallback span{color:var(--gold-soft)}
+header.top .titles{display:flex;flex-direction:column;line-height:1.15}
+header.top .titles .t1{font-size:15px;font-weight:650}
+header.top .titles .t2{font-size:11.5px;color:#aeb9d4;letter-spacing:.04em;text-transform:uppercase}
+header.top .spacer{flex:1}
+.srch{position:relative;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.20);border-radius:9px;padding:6px 11px;min-width:250px}
+.srch:focus-within{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4)}
+.srch-ico{color:#c8d2e8;font-size:15px;line-height:1}
+.srch input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:13px;min-width:0}
+.srch input::placeholder{color:#aeb9d4}
+.srch-pop{position:absolute;top:calc(100% + 7px);left:0;right:0;z-index:90;background:var(--card);
+  color:var(--ink);border:1px solid var(--line);border-radius:11px;box-shadow:0 14px 38px rgba(20,33,61,.28);
+  padding:6px;max-height:60vh;overflow-y:auto;display:none;min-width:280px}
+.srch-pop.open{display:block}
+.srch-opt{display:block;width:100%;text-align:left;background:none;border:none;padding:8px 10px;
+  border-radius:7px;font-size:13px;color:var(--ink)}
+.srch-opt:hover,.srch-opt.on{background:var(--bg)}
+.srch-opt small{display:block;color:var(--muted);font-size:11.5px}
+.srch-empty{padding:12px;color:var(--muted);font-size:12.5px;text-align:center}
+.iconbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.20);color:#fff;
+  border-radius:9px;padding:7px 10px;font-size:13px;line-height:1}
+.iconbtn:hover{background:rgba(255,255,255,.2)}
+.goldbar{height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-soft),var(--gold))}
+nav.tabs{background:var(--card);border-bottom:1px solid var(--line);padding:0 18px;
+  display:flex;gap:2px;overflow-x:auto;scrollbar-width:thin;
+  -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);
+  mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
+@supports not (mask-image:linear-gradient(90deg,#000,transparent)){nav.tabs{-webkit-mask-image:none;mask-image:none}}
+nav.tabs button{background:none;border:none;padding:11px 13px;font-size:13px;color:var(--muted);
+  border-bottom:2.5px solid transparent;white-space:nowrap;font-weight:550}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button.on{color:var(--navy);border-bottom-color:var(--gold);font-weight:700}
+:root[data-theme="dark"] nav.tabs button.on{color:var(--gold-soft)}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) nav.tabs button.on{color:var(--gold-soft)}}
+
+main{padding:20px 26px 60px;max-width:1360px;margin:0 auto}
+.viewhead{margin-bottom:18px}
+.viewhead h2{font-size:22px;margin-bottom:4px}
+.viewhead p{margin:0;color:var(--muted);font-size:13.5px;max-width:74ch}
+
+/* ---------------------------------------------------------------- cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:16px;
+  grid-auto-flow:dense}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:16px 17px;display:flex;flex-direction:column;min-width:0}
+.card.wide{grid-column:1/-1}
+.card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:3px}
+.card-head h3{font-size:15px;line-height:1.25;flex:1;min-width:0}
+.card-sub{color:var(--muted);font-size:12px;margin:2px 0 0}
+.tag{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--muted);background:var(--bg);border:1px solid var(--line);
+  padding:2px 7px;border-radius:20px;white-space:nowrap}
+.card-actions{display:flex;gap:4px;flex-shrink:0}
+.mini{background:none;border:1px solid var(--line);border-radius:7px;color:var(--muted);
+  padding:3px 7px;font-size:11.5px;line-height:1.3}
+.mini:hover{border-color:var(--s1);color:var(--s1)}
+.mini.on{background:var(--s1);border-color:var(--s1);color:#fff}
+
+.headline{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:11px 0 2px}
+.headline .val{font-size:27px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.headline .unit{font-size:12px;color:var(--muted)}
+.deltas{display:flex;gap:14px;flex-wrap:wrap;margin:7px 0 3px;font-size:12px;color:var(--muted)}
+.deltas b{font-weight:700}
+.up{color:var(--good)}.down{color:var(--bad)}.flat{color:var(--muted)}
+
+.chartbox{position:relative;height:210px;margin-top:10px}
+.chartbox.tall{height:290px}
+.legend{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:none;
+  border-radius:20px;padding:3px 10px 3px 7px;font-size:11.5px;color:var(--muted)}
+.chip i{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.chip.on{color:var(--ink);border-color:var(--axis);background:var(--card-2)}
+.chip:disabled{opacity:.45;cursor:not-allowed}
+
+.notes{margin-top:11px;border-top:1px solid var(--line);padding-top:10px}
+.note{display:flex;gap:8px;font-size:12px;color:var(--ink-2);margin-bottom:7px;line-height:1.45}
+.note:last-child{margin-bottom:0}
+.note .ico{flex-shrink:0;font-weight:700;font-size:11px;width:17px;height:17px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;margin-top:1px}
+.note.methodology .ico,.note.definition .ico{background:#f6ecc9;color:#7a5c00}
+.note.covid .ico,.note.coverage .ico{background:#e6ecf7;color:#2a3f70}
+.note.estimate .ico{background:var(--bg);color:var(--muted)}
+.note.plain .ico{background:var(--bg);color:var(--muted)}
+:root[data-theme="dark"] .note.methodology .ico,:root[data-theme="dark"] .note.definition .ico{background:#4a3c10;color:#e2c662}
+:root[data-theme="dark"] .note.covid .ico,:root[data-theme="dark"] .note.coverage .ico{background:#1e2c48;color:#aeb9d4}
+.per{font-weight:700;color:var(--ink)}
+
+table.dt{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+table.dt th,table.dt td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+table.dt th:first-child,table.dt td:first-child{text-align:left;white-space:normal}
+table.dt thead th{color:var(--muted);font-weight:650;font-size:11px;text-transform:uppercase;
+  letter-spacing:.03em;position:sticky;top:0;background:var(--card)}
+table.dt tbody tr:hover{background:var(--bg)}
+table.dt td.nd{color:var(--muted);font-style:italic;font-size:11px}
+.tablewrap{overflow:auto;max-height:340px;margin-top:11px;border:1px solid var(--line);border-radius:9px}
+.tablewrap.short{max-height:none}
+
+/* ---------------------------------------------------------------- KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:12px;margin-bottom:22px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:14px 15px;text-align:left;display:block;width:100%}
+.kpi:hover{border-color:var(--s1)}
+.kpi .lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;
+  font-weight:650;line-height:1.3}
+.kpi .val{font-size:29px;font-weight:700;letter-spacing:-.025em;margin:6px 0 2px;line-height:1}
+.kpi .spark{height:34px;margin:8px 0 6px}
+.kpi .row{display:flex;gap:12px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+
+.banner{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);
+  border-radius:10px;padding:12px 15px;margin-bottom:18px;font-size:13px;color:var(--ink-2);line-height:1.5}
+.banner b{color:var(--ink)}
+
+.empty{color:var(--muted);text-align:center;padding:50px 20px;font-size:13.5px}
+
+@media (max-width:900px){
+  main{padding:16px 14px 50px}
+  .grid{grid-template-columns:1fr}
+  header.top{padding:10px 14px;gap:10px;flex-wrap:wrap}
+  header.top .logo{height:30px}
+  .srch{order:3;width:100%;min-width:0}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .kpi .val{font-size:23px}
+}
+@media print{
+  .topstack,.card-actions,.legend,.mini,nav.tabs,#gate{display:none!important}
+  body{background:#fff}
+  .card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+  .grid{grid-template-columns:1fr 1fr}
+  .tablewrap{max-height:none;overflow:visible}
+}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-card">
+    <img src="https://www.epicenter.org/wp-content/uploads/2021/08/EDOT-logo-white-transparent.png"
+         alt="Episcopal Diocese of Texas" onerror="this.style.display='none';document.getElementById('gfb').style.display='block'">
+    <div id="gfb" class="gate-fallback" style="display:none">E<span>D</span>OT</div>
+    <h1>VTO Dashboard</h1>
+    <p>Vision, Traction &amp; Organization data for goal setting</p>
+    <form class="gate-row" id="gateForm" autocomplete="off">
+      <input id="gatePass" type="password" placeholder="Passphrase" autocomplete="current-password" autofocus>
+      <button id="gateBtn" type="submit">Open</button>
+    </form>
+    <div id="gateMsg"></div>
+    <div class="gate-note">
+      This dashboard contains staff and clergy demographic and financial data.
+      The underlying file is encrypted; without the passphrase there is nothing
+      readable here.
+    </div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div class="topstack">
+    <header class="top">
+      <img class="logo" src="https://www.epicenter.org/wp-content/uploads/2021/08/EDOT-logo-white-transparent.png"
+           alt="Episcopal Diocese of Texas" onerror="this.style.display='none';document.getElementById('lfb').style.display='block'">
+      <div id="lfb" class="logo-fallback" style="display:none">E<span>D</span>OT</div>
+      <div class="titles">
+        <div class="t1">VTO Dashboard</div>
+        <div class="t2" id="hdrSub">Goal Setting</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="srch">
+        <span class="srch-ico">&#9906;</span>
+        <input id="q" type="text" placeholder="Search metrics&hellip;" autocomplete="off">
+        <div class="srch-pop" id="qpop"></div>
+      </div>
+      <button class="iconbtn" id="themeBtn" title="Toggle light / dark">&#9681;</button>
+      <button class="iconbtn" id="printBtn" title="Print or save as PDF">&#9113;</button>
+    </header>
+    <div class="goldbar"></div>
+    <nav class="tabs" id="nav"></nav>
+  </div>
+  <main id="main"></main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+"use strict";
+
+/* =====================================================================
+   1. Decryption gate — PBKDF2-SHA256 -> AES-GCM, via Web Crypto
+   ===================================================================== */
+
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+async function unlock(passphrase){
+  const res = await fetch("data.enc.json", {cache:"no-store"});
+  if(!res.ok) throw new Error("Could not load data.enc.json ("+res.status+")");
+  const p = await res.json();
+
+  const base = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(passphrase), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt:b64(p.salt), iterations:p.kdf.iterations, hash:p.kdf.hash},
+    base, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+
+  let plain;
+  try{
+    plain = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64(p.iv)}, key, b64(p.ct));
+  }catch(e){
+    const err = new Error("wrong-passphrase"); err.wrong = true; throw err;
+  }
+
+  // Payload is gzipped before encryption.
+  let bytes = new Uint8Array(plain);
+  if(p.encoding === "gzip"){
+    const ds = new DecompressionStream("gzip");
+    bytes = new Uint8Array(await new Response(
+      new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer());
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+const gateForm = document.getElementById("gateForm");
+const gateMsg  = document.getElementById("gateMsg");
+const gateBtn  = document.getElementById("gateBtn");
+
+gateForm.addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const pass = document.getElementById("gatePass").value;
+  if(!pass) return;
+  gateBtn.disabled = true;
+  gateMsg.className = "info";
+  gateMsg.textContent = "Decrypting…";
+  try{
+    const data = await unlock(pass);
+    try{ sessionStorage.setItem("vto.pass", pass); }catch(e){}
+    document.getElementById("gate").remove();
+    document.getElementById("app").classList.remove("hidden");
+    boot(data);
+  }catch(e){
+    gateMsg.className = "";
+    gateMsg.textContent = e.wrong
+      ? "That passphrase did not work. Check for typos or extra spaces."
+      : e.message;
+    gateBtn.disabled = false;
+    document.getElementById("gatePass").select();
+  }
+});
+
+// Re-open silently within the same browser tab.
+(async function resume(){
+  let pass = null;
+  try{ pass = sessionStorage.getItem("vto.pass"); }catch(e){}
+  if(!pass) return;
+  try{
+    const data = await unlock(pass);
+    document.getElementById("gate").remove();
+    document.getElementById("app").classList.remove("hidden");
+    boot(data);
+  }catch(e){
+    try{ sessionStorage.removeItem("vto.pass"); }catch(_){}
+  }
+})();
+
+/* =====================================================================
+   2. Values, formatting, deltas
+   ===================================================================== */
+
+let DATA=null, SECTIONS={}, THEMES=[], META={};
+
+const isNum = v => typeof v === "number";
+const notTracked = v => v && typeof v === "object" && v.state === "not_tracked";
+// A cell may be a bare number, null, or {value,raw} / {state,raw}.
+const numOf = v => isNum(v) ? v : (v && typeof v === "object" && isNum(v.value) ? v.value : null);
+const rawOf = v => (v && typeof v === "object" && v.raw) ? v.raw : null;
+
+const nf0 = new Intl.NumberFormat("en-US");
+const nf1 = new Intl.NumberFormat("en-US",{minimumFractionDigits:1,maximumFractionDigits:1});
+
+function fmt(v, format){
+  const n = numOf(v);
+  if(n === null) return "—";
+  switch(format){
+    case "percent1": return nf1.format(n*100)+"%";
+    case "percent0": return Math.round(n*100)+"%";
+    case "usd0":     return "$"+nf0.format(Math.round(n));
+    case "usd2":     return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+    case "decimal1": return nf1.format(n);
+    default:         return nf0.format(Math.round(n*100)/100);
+  }
+}
+// Compact form for KPI tiles: 128,890 -> 128.9K, 77,245,269 -> $77.2M
+function fmtBig(n, format){
+  if(n === null) return "—";
+  const cur = format && format.startsWith("usd") ? "$" : "";
+  const a = Math.abs(n);
+  if(format === "percent1") return nf1.format(n*100)+"%";
+  if(a >= 1e6) return cur+nf1.format(n/1e6)+"M";
+  if(a >= 1e4) return cur+nf1.format(n/1e3)+"K";
+  return cur+nf0.format(Math.round(n));
+}
+
+// Slots are assigned by position in the ACTIVE set, never by index in the
+// section's full series list. Only slots 1–5 are validated all-pairs, and an
+// arbitrary combination (e.g. slots 4 and 6) collapses to ΔE 0.3 under
+// deuteranopia. Charts therefore cap at MAX_SERIES and always take the prefix.
+const MAX_SERIES = 5;
+function seriesColor(i){
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue("--s"+((i%8)+1)).trim();
+}
+
+// Rows ascending by year; ties keep sheet order.
+function asc(rows){
+  return rows.slice().sort((a,b)=>(a.year||0)-(b.year||0));
+}
+function pointsFor(section, sid){
+  return asc(section.rows).map(r => ({
+    period: r.period, year: r.year,
+    v: numOf(r.values[sid]),
+    untracked: notTracked(r.values[sid]),
+    raw: rawOf(r.values[sid]), note: r.note || null
+  }));
+}
+function lastReal(pts){
+  for(let i=pts.length-1;i>=0;i--) if(pts[i].v !== null) return pts[i];
+  return null;
+}
+function prevReal(pts, beforeIdx){
+  for(let i=beforeIdx-1;i>=0;i--) if(pts[i].v !== null) return pts[i];
+  return null;
+}
+function atYear(pts, year){
+  const hit = pts.filter(p=>p.year===year && p.v!==null);
+  return hit.length ? hit[hit.length-1] : null;
+}
+function pctChange(now, then){
+  if(now===null||then===null||then===0) return null;
+  return (now-then)/Math.abs(then);
+}
+function deltaHTML(label, now, then, higherIsBetter, isPct){
+  if(now===null||then===null) return "";
+  let txt, dir;
+  if(isPct){                       // percentage-point difference
+    const d = (now-then)*100;
+    dir = Math.abs(d)<0.05 ? 0 : (d>0?1:-1);
+    txt = (d>0?"+":"")+nf1.format(d)+" pts";
+  }else{
+    const c = pctChange(now, then);
+    if(c===null) return "";
+    dir = Math.abs(c)<0.0005 ? 0 : (c>0?1:-1);
+    txt = (c>0?"+":"")+nf1.format(c*100)+"%";
+  }
+  let cls = "flat";
+  if(dir!==0 && higherIsBetter!==null && higherIsBetter!==undefined)
+    cls = (dir>0)===!!higherIsBetter ? "up" : "down";
+  const arrow = dir>0?"↑":dir<0?"↓":"→";
+  return `<span>${label} <b class="${cls}">${arrow} ${txt}</b></span>`;
+}
+
+/* =====================================================================
+   3. Charts
+   ===================================================================== */
+
+const CHARTS = new Map();
+function destroyCharts(){ CHARTS.forEach(c=>c.destroy()); CHARTS.clear(); }
+
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+// Shades the pre-tracking region so a metric that started late never looks
+// like it grew from zero.
+const untrackedBand = {
+  id:"untrackedBand",
+  beforeDatasetsDraw(chart, args, opts){
+    const start = opts && opts.startIndex;
+    if(start === undefined || start === null || start <= 0) return;
+    const {ctx, chartArea:{top,bottom}, scales:{x}} = chart;
+    const edge = x.getPixelForValue(start) - (x.getPixelForValue(1)-x.getPixelForValue(0))/2;
+    ctx.save();
+    ctx.fillStyle = css("--untracked");
+    ctx.fillRect(x.left, top, Math.max(0, edge-x.left), bottom-top);
+    ctx.restore();
+    ctx.save();
+    ctx.fillStyle = css("--muted");
+    ctx.font = "10px -apple-system,system-ui,sans-serif";
+    ctx.textAlign = "center";
+    const mid = (x.left+edge)/2;
+    if(edge-x.left > 64) ctx.fillText("not tracked", mid, top+13);
+    ctx.restore();
+  }
+};
+Chart.register(untrackedBand);
+
+// One unit for the whole axis, chosen from its largest tick — so an axis never
+// mixes "5,000" with "10.0K".
+function axisTick(v, isPct, format, scaleMax){
+  if(isPct) return Math.round(v*100)+"%";
+  const cur = format && format.startsWith("usd") ? "$" : "";
+  const m = Math.abs(scaleMax||0);
+  if(m >= 1e6) return cur+nf1.format(v/1e6)+"M";
+  if(m >= 1e4) return cur+(v===0?"0":nf0.format(Math.round(v/1e3))+"K");
+  return cur+nf0.format(v);
+}
+
+function baseOptions(section, opts={}){
+  const isPct = opts.isPct;
+  return {
+    responsive:true, maintainAspectRatio:false,
+    interaction:{mode:"index", intersect:false},
+    layout:{padding:{top:4,right:6}},
+    plugins:{
+      legend:{display:false},
+      untrackedBand:{startIndex: opts.startIndex},
+      tooltip:{
+        backgroundColor:css("--navy-deep"), padding:10, cornerRadius:8,
+        titleFont:{size:12,weight:"600"}, bodyFont:{size:12},
+        borderColor:"rgba(255,255,255,.14)", borderWidth:1,
+        callbacks:{
+          label(c){
+            const ds = c.dataset;
+            const v = c.parsed.y;
+            if(v===null||v===undefined) return ds.label+": no data";
+            return ds.label+": "+fmt(v, ds._format);
+          },
+          afterBody(items){
+            if(!items.length) return "";
+            const i = items[0].dataIndex;
+            const extra = [];
+            items.forEach(it=>{
+              const r = it.dataset._raw && it.dataset._raw[i];
+              if(r) extra.push("ℹ "+it.dataset.label+": “"+r+"”");
+            });
+            const note = opts.notes && opts.notes[i];
+            if(note) extra.push("ℹ "+note);
+            return extra;
+          }
+        }
+      }
+    },
+    scales:{
+      x:{grid:{display:false}, border:{color:css("--axis")},
+         ticks:{color:css("--muted"), font:{size:11}, maxRotation:0, autoSkipPadding:12}},
+      y:{beginAtZero:!isPct, grid:{color:css("--grid"), drawTicks:false},
+         border:{display:false},
+         ticks:{color:css("--muted"), font:{size:11}, padding:6, maxTicksLimit:6,
+                callback:v=>axisTick(v, isPct, opts.format, opts.scaleMax)}}
+    }
+  };
+}
+
+function lineChart(canvas, section, activeIds, opts={}){
+  const rows = asc(section.rows);
+  const labels = rows.map(r=>r.period);
+  const notes  = rows.map(r=>r.note||null);
+  const startIndex = section.trackingStartYear
+    ? rows.findIndex(r=>(r.year||0) >= section.trackingStartYear) : null;
+
+  const datasets = activeIds.map((sid, i)=>{
+    const s = section.series.find(x=>x.id===sid);
+    const pts = pointsFor(section, sid);
+    return {
+      label:s.label,
+      data:pts.map(p=>p.v),
+      _format:s.format, _raw:pts.map(p=>p.raw),
+      borderColor:seriesColor(i), backgroundColor:seriesColor(i),
+      borderWidth:2, tension:.25,
+      pointRadius:4, pointHoverRadius:6, pointBorderWidth:2,
+      pointBorderColor:css("--card"),
+      spanGaps:false                     // never bridge a gap in reporting
+    };
+  });
+  const isPct = activeIds.every(id=>{
+    const s=section.series.find(x=>x.id===id); return s && s.unit==="percent";
+  });
+  const fmtOne = section.series.find(x=>x.id===activeIds[0]);
+  const scaleMax = Math.max(0, ...datasets.flatMap(d=>d.data.filter(v=>v!==null).map(Math.abs)));
+  const o = baseOptions(section,{isPct, startIndex, notes, scaleMax,
+                                format:fmtOne?fmtOne.format:"integer"});
+  const c = new Chart(canvas, {type:"line", data:{labels,datasets}, options:o});
+  CHARTS.set(canvas.id, c);
+  return c;
+}
+
+function barChart(canvas, labels, values, format, colorIdx=0, horizontal=true){
+  const c = new Chart(canvas,{
+    type:"bar",
+    data:{labels,datasets:[{
+      data:values, _format:format,
+      backgroundColor:seriesColor(colorIdx),
+      borderRadius:4, borderSkipped:false,
+      maxBarThickness:26, label:"Value"
+    }]},
+    options:{
+      indexAxis: horizontal?"y":"x",
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{backgroundColor:css("--navy-deep"),padding:10,cornerRadius:8,
+          callbacks:{label:c=>fmt(horizontal?c.parsed.x:c.parsed.y, format)}}},
+      scales:{
+        x:{beginAtZero:true, grid:{color:css("--grid"),drawTicks:false}, border:{display:false},
+           ticks:{color:css("--muted"),font:{size:11},callback:v=>fmtBig(v,format)}},
+        y:{grid:{display:false}, border:{color:css("--axis")},
+           ticks:{color:css("--muted"),font:{size:11},
+             callback(v){const s=this.getLabelForValue(v);return s.length>30?s.slice(0,29)+"…":s;}}}
+      }
+    }
+  });
+  CHARTS.set(canvas.id,c);
+  return c;
+}
+
+function sparkline(pts, w=200, h=34){
+  const vals = pts.filter(p=>p.v!==null);
+  if(vals.length<2) return "";
+  const ys = vals.map(p=>p.v), min=Math.min(...ys), max=Math.max(...ys);
+  const span = (max-min)||1;
+  const step = w/(vals.length-1);
+  const pt = (p,i)=>[i*step, h-2-((p.v-min)/span)*(h-6)];
+  const d = vals.map((p,i)=>{const[x,y]=pt(p,i);return (i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1);}).join(" ");
+  const [lx,ly] = pt(vals[vals.length-1], vals.length-1);
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true" style="width:100%">
+    <path d="${d}" fill="none" stroke="${seriesColor(0)}" stroke-width="2"
+      stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+    <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="2.6" fill="${seriesColor(0)}"/>
+  </svg>`;
+}
+
+/* =====================================================================
+   4. Card rendering
+   ===================================================================== */
+
+const esc = s => String(s==null?"":s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+const CAVEAT_ICON = {methodology:"!",definition:"!",covid:"•",coverage:"•",estimate:"~"};
+
+function notesHTML(section){
+  const bits = [];
+  (section.caveats||[]).forEach(c=>{
+    const ico = CAVEAT_ICON[c.type] || "ℹ";
+    bits.push(`<div class="note ${esc(c.type)}"><span class="ico">${ico}</span><div>${
+      c.period?`<span class="per">${esc(c.period)}:</span> `:""}${esc(c.text)}</div></div>`);
+  });
+  (section.notes||[]).forEach(n=>{
+    bits.push(`<div class="note plain"><span class="ico">ℹ</span><div>${esc(n)}</div></div>`);
+  });
+  return bits.length ? `<div class="notes">${bits.join("")}</div>` : "";
+}
+
+let uid = 0;
+function nextId(){ return "c"+(++uid); }
+
+function cardShell(section, bodyHTML, extraClass=""){
+  return `<section class="card ${extraClass}" id="card-${esc(section.id)}" data-sec="${esc(section.id)}">
+    <div class="card-head">
+      <div style="flex:1;min-width:0">
+        <h3>${esc(section.title)}</h3>
+        ${section.subtitle?`<p class="card-sub">${esc(section.subtitle)}</p>`:""}
+      </div>
+      <div class="card-actions">
+        <span class="tag">${esc(section.tab)}</span>
+      </div>
+    </div>
+    ${bodyHTML}
+    ${notesHTML(section)}
+  </section>`;
+}
+
+function tableFor(section, ids){
+  const cols = ids.map(id=>section.series.find(s=>s.id===id));
+  const rows = section.rows.slice().sort((a,b)=>(b.year||0)-(a.year||0));
+  const head = `<tr><th>Period</th>${cols.map(c=>`<th>${esc(c.label)}</th>`).join("")}</tr>`;
+  const body = rows.map(r=>{
+    const tds = cols.map(c=>{
+      const v = r.values[c.id];
+      if(notTracked(v)) return `<td class="nd" title="${esc(rawOf(v)||"")}">not tracked</td>`;
+      if(numOf(v)===null) return `<td class="nd">no data</td>`;
+      const raw = rawOf(v);
+      return `<td${raw?` title="${esc(raw)}"`:""}>${fmt(v,c.format)}${raw?" *":""}</td>`;
+    }).join("");
+    return `<tr><td>${esc(r.period)}</td>${tds}</tr>`;
+  }).join("");
+  return `<div class="tablewrap"><table class="dt"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+}
+
+// One axis means one unit and one order of magnitude. A count series plotted
+// beside a percentage, or 17 events beside 713 attendees, produces a line
+// pinned to the baseline that reads as "zero" — the dual-axis problem wearing
+// a single axis. Series that cannot share the scale stay available as chips
+// but are not shown by default.
+function defaultActive(section){
+  const all = section.series;
+  if(section.headline) return [section.headline];
+  const unit = all[0].unit;
+  const sameUnit = all.filter(s=>s.unit===unit);
+  const maxOf = s => Math.max(0, ...pointsFor(section, s.id)
+    .map(p=>p.v).filter(v=>v!==null).map(Math.abs));
+  const peak = Math.max(...sameUnit.map(maxOf));
+  const keep = sameUnit.filter(s => peak===0 || maxOf(s) >= peak/25);
+  return (keep.length ? keep : sameUnit).slice(0, MAX_SERIES).map(s=>s.id);
+}
+
+function renderTimeseries(section, o={}){
+  const cid = nextId();
+  const all = section.series.map(s=>s.id);
+  const dflt = defaultActive(section);
+  section._active = dflt.slice();
+
+  const head = section.series.find(s=>s.id===dflt[0]);
+  const pts = pointsFor(section, dflt[0]);
+  const last = lastReal(pts);
+  const idx = last ? pts.indexOf(last) : -1;
+  const prev = idx>0 ? prevReal(pts, idx) : null;
+  const base = atYear(pts, META.baselineYear);
+  const isPct = head && head.unit==="percent";
+
+  let headline = "";
+  if(last){
+    const ds = [
+      prev ? deltaHTML("vs "+prev.period, last.v, prev.v, head.higherIsBetter, isPct) : "",
+      (base && base!==last) ? deltaHTML("vs "+META.baselineYear, last.v, base.v, head.higherIsBetter, isPct) : ""
+    ].filter(Boolean).join("");
+    headline = `<div class="headline"><span class="val">${fmt(last.v,head.format)}</span>
+      <span class="unit">${esc(head.label)} · ${esc(last.period)}</span></div>
+      ${ds?`<div class="deltas">${ds}</div>`:""}`;
+  }
+
+  const chipHTML = () => section.series.map(s=>{
+    const pos = section._active.indexOf(s.id);
+    const swatch = pos>=0 ? seriesColor(pos) : "transparent";
+    const ring = pos>=0 ? "" : ";box-shadow:inset 0 0 0 1.5px var(--axis)";
+    return `<button class="chip${pos>=0?" on":""}" data-sid="${esc(s.id)}"
+      aria-pressed="${pos>=0}"><i style="background:${swatch}${ring}"></i>${esc(s.label)}</button>`;
+  }).join("");
+  const chips = chipHTML();
+
+  const body = `${headline}
+    <div class="chartbox"><canvas id="${cid}"></canvas></div>
+    ${section.series.length>1?`<div class="legend" data-legend>${chips}</div>`:""}
+    ${o.compact ? "" : tableFor(section, all)}`;
+
+  // A section with many columns needs the full row or its table is a slit.
+  // Compact cards drop the table, so they stay in the normal grid.
+  const wide = (!o.compact && section.series.length > 5) ? "wide" : "";
+
+  return {html: cardShell(section, body, wide), mount(){
+    lineChart(document.getElementById(cid), section, section._active);
+    const card = document.getElementById("card-"+section.id);
+    const legend = card && card.querySelector("[data-legend]");
+    if(!legend) return;
+    legend.addEventListener("click", e=>{
+      const btn = e.target.closest(".chip"); if(!btn) return;
+      const sid = btn.dataset.sid;
+      const on = section._active.includes(sid);
+      const unitOf = id => (section.series.find(x=>x.id===id)||{}).unit;
+      if(on){
+        if(section._active.length===1) return;      // keep at least one
+        section._active = section._active.filter(x=>x!==sid);
+      }else if(unitOf(sid) !== unitOf(section._active[0])){
+        section._active = [sid];                    // never two units on one axis
+      }else{
+        if(section._active.length>=MAX_SERIES) return;
+        section._active.push(sid);
+      }
+      legend.innerHTML = chipHTML();
+      setChipState();
+      const old = CHARTS.get(cid); if(old) old.destroy();
+      lineChart(document.getElementById(cid), section, section._active);
+    });
+    function setChipState(){
+      const full = section._active.length>=MAX_SERIES;
+      const unitOf = id => (section.series.find(x=>x.id===id)||{}).unit;
+      const activeUnit = unitOf(section._active[0]);
+      legend.querySelectorAll(".chip").forEach(c=>{
+        const active = section._active.includes(c.dataset.sid);
+        const other = unitOf(c.dataset.sid) !== activeUnit;
+        c.disabled = !active && full && !other;
+        c.title = c.disabled
+          ? "Showing as many series as stay clearly distinguishable at once — "
+            + "remove one to add another"
+          : other ? "Measured in a different unit — selecting it shows it on its own"
+          : "";
+      });
+    }
+    setChipState();
+  }};
+}
+
+function renderCategorical(section){
+  const cid = nextId();
+  const primary = section.series[0];
+  const labels = section.rows.map(r=>r.category);
+  const values = section.rows.map(r=>numOf(r.values[primary.id]));
+
+  const head = `<div class="headline"><span class="val">${
+    fmt(values.reduce((a,b)=>a+(b||0),0), primary.format)}</span>
+    <span class="unit">total · ${esc(primary.label)}</span></div>`;
+
+  const cols = section.series;
+  const thead = `<tr><th>Category</th>${cols.map(c=>`<th>${esc(c.label)}</th>`).join("")}${
+    section.rows.some(r=>r.extra)?"<th>Note</th>":""}</tr>`;
+  const tbody = section.rows.map(r=>
+    `<tr><td>${esc(r.category)}</td>${cols.map(c=>{
+      const v=r.values[c.id];
+      return numOf(v)===null?`<td class="nd">—</td>`:`<td>${fmt(v,c.format)}</td>`;
+    }).join("")}${r.extra?`<td style="text-align:left">${esc(r.extra)}</td>`:
+      (section.rows.some(x=>x.extra)?"<td></td>":"")}</tr>`).join("");
+
+  const body = `${head}
+    <div class="chartbox tall"><canvas id="${cid}"></canvas></div>
+    <div class="tablewrap short"><table class="dt"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
+
+  return {html: cardShell(section, body, "wide"), mount(){
+    barChart(document.getElementById(cid), labels, values, primary.format, 0, true);
+  }};
+}
+
+function renderMatrix(section){
+  const cid = nextId();
+  const periods = section.periods;
+  const rows = section.rows.slice();
+
+  // Total line across periods (sum of all entities that reported).
+  const totals = periods.map(p=>{
+    let t=null;
+    rows.forEach(r=>{const n=numOf(r.values[p]); if(n!==null) t=(t||0)+n;});
+    return t;
+  });
+
+  const head = `<tr><th>${esc(section.entityLabel||"Entity")}</th>${
+    periods.map(p=>`<th>${esc(p)}</th>`).join("")}<th>Trend</th></tr>`;
+  const body = rows.map(r=>{
+    const pts = periods.map(p=>({v:numOf(r.values[p])}));
+    const tds = periods.map(p=>{
+      const v=r.values[p];
+      return numOf(v)===null?`<td class="nd">—</td>`:`<td>${nf0.format(numOf(v))}</td>`;
+    }).join("");
+    return `<tr><td${r.note?` title="${esc(r.note)}"`:""}>${esc(r.entity)}${
+      r.note?' <span style="color:var(--muted)">*</span>':""}</td>${tds}
+      <td style="width:80px">${sparkline(pts,80,20)}</td></tr>`;
+  }).join("");
+  const foot = `<tr><td><b>Total reported</b></td>${
+    totals.map(t=>`<td><b>${t===null?"—":nf0.format(t)}</b></td>`).join("")}<td></td></tr>`;
+
+  const body2 = `<div class="chartbox"><canvas id="${cid}"></canvas></div>
+    <div class="tablewrap"><table class="dt"><thead>${head}</thead>
+      <tbody>${body}${foot}</tbody></table></div>`;
+
+  return {html: cardShell(section, body2, "wide"), mount(){
+    const c = new Chart(document.getElementById(cid),{
+      type:"line",
+      data:{labels:periods,datasets:[{
+        label:"Total "+(section.valueLabel||""), data:totals, _format:"integer",
+        borderColor:seriesColor(0), backgroundColor:seriesColor(0),
+        borderWidth:2, tension:.25, pointRadius:4, pointHoverRadius:6,
+        pointBorderWidth:2, pointBorderColor:css("--card"), spanGaps:false}]},
+      options:baseOptions(section,{format:"integer"})
+    });
+    CHARTS.set(cid,c);
+  }};
+}
+
+function renderIrregular(section){
+  const periods = section.periods;
+  const head = `<tr><th>Metric</th>${periods.map(p=>`<th>${esc(p)}</th>`).join("")}</tr>`;
+  const body = section.rows.map(r=>{
+    const tds = periods.map(p=>{
+      const v = r.values[p];
+      if(v===null||v===undefined) return `<td class="nd">—</td>`;
+      if(v.state==="text")        return `<td class="nd" style="text-align:left;white-space:normal;max-width:180px">${esc(v.raw)}</td>`;
+      if(v.state==="not_tracked") return `<td class="nd" title="${esc(v.raw)}">not tracked</td>`;
+      const n = numOf(v), raw = rawOf(v);
+      if(n===null) return `<td class="nd">—</td>`;
+      const txt = r.unit==="usd" ? "$"+nf0.format(Math.round(n)) : nf0.format(n);
+      return `<td${raw?` title="${esc(raw)}"`:""}>${txt}${raw?" *":""}</td>`;
+    }).join("");
+    return `<tr><td>${esc(r.metric)}</td>${tds}</tr>`;
+  }).join("");
+
+  const body2 = `<div class="banner" style="margin:10px 0 0">
+      <b>Periods on this table are not comparable.</b> Columns mix calendar years with
+      twelve-month periods ending 30 June, and the program's purpose changed partway
+      through. It is shown as a table on purpose — a trend line across these
+      columns would be misleading.</div>
+    <div class="tablewrap"><table class="dt"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+
+  return {html: cardShell(section, body2, "wide"), mount(){}};
+}
+
+function renderSection(section, o={}){
+  switch(section.kind){
+    case "categorical": return renderCategorical(section);
+    case "matrix":      return renderMatrix(section);
+    case "irregular":   return renderIrregular(section);
+    default:            return renderTimeseries(section, o);
+  }
+}
+
+/* =====================================================================
+   5. Views
+   ===================================================================== */
+
+// Headline metrics for the overview and the recovery index.
+const KPIS = [
+  {sec:"population.impact",   sid:"total",         label:"Individuals Impacted"},
+  {sec:"communities.asa",     sid:"asa",           label:"EDOT Average Sunday Attendance"},
+  {sec:"communities.counts",  sid:"total",         label:"Communities"},
+  {sec:"social.impact",       sid:"total",         label:"Social Impact"},
+  {sec:"other.visitations",   sid:"confirmations", label:"Confirmations"},
+  {sec:"com.seminarians",     sid:"enrolled",      label:"Seminarians Enrolled"}
+];
+
+function kpiTile(k){
+  const s = SECTIONS[k.sec]; if(!s) return "";
+  const ser = s.series.find(x=>x.id===k.sid);
+  const pts = pointsFor(s, k.sid);
+  const last = lastReal(pts); if(!last) return "";
+  const idx = pts.indexOf(last);
+  const prev = prevReal(pts, idx);
+  const base = atYear(pts, META.baselineYear);
+  const isPct = ser.unit==="percent";
+  const ds = [
+    prev?deltaHTML("vs "+prev.period, last.v, prev.v, ser.higherIsBetter, isPct):"",
+    (base&&base!==last)?deltaHTML("vs "+META.baselineYear, last.v, base.v, ser.higherIsBetter, isPct):""
+  ].filter(Boolean).join("");
+  return `<button class="kpi" data-goto="${esc(k.sec)}">
+    <div class="lbl">${esc(k.label)}</div>
+    <div class="val">${fmtBig(last.v, ser.format)}</div>
+    <div style="font-size:11.5px;color:var(--muted)">${esc(last.period)}</div>
+    ${sparkline(pts)}
+    <div class="row">${ds}</div>
+  </button>`;
+}
+
+function viewOverview(){
+  const tiles = KPIS.map(kpiTile).join("");
+  const flagged = Object.values(SECTIONS)
+    .flatMap(s=>(s.caveats||[]).filter(c=>c.type==="methodology"||c.type==="definition")
+      .map(c=>({s,c}))).slice(0,4);
+
+  return {html:`
+    <div class="viewhead">
+      <h2>Overview</h2>
+      <p>Headline measures for the ${META.reportingYear} VTO cycle. Each figure is compared
+         both to last year and to ${META.baselineYear}, because the pandemic broke almost
+         every series in this workbook and a one-year comparison alone can tell the
+         opposite story.</p>
+    </div>
+    <div class="kpis">${tiles}</div>
+    <div class="banner">
+      <b>Before setting targets, read the notes.</b> ${flagged.length} measures in this
+      workbook changed definition or counting method partway through their history, and
+      several show zeros for years when the metric simply was not collected yet. Every
+      affected card carries a note, and they are gathered on the
+      <a href="#" data-goto-view="notes">Data Notes</a> page.
+    </div>
+    <div class="grid" id="ovGrid"></div>`,
+    mount(){
+      const grid = document.getElementById("ovGrid");
+      const picks = ["communities.asa","population.impact","communities.counts",
+                     "social.impact","other.visitations","com.seminarians"];
+      const mounts = [];
+      grid.innerHTML = picks.map(id=>{
+        const r = renderSection(SECTIONS[id], {compact:true});
+        mounts.push(r.mount); return r.html;
+      }).join("");
+      mounts.forEach(m=>m());
+    }};
+}
+
+function viewTheme(themeId){
+  const t = THEMES.find(x=>x.id===themeId);
+  const mounts = [];
+  const cards = t.sections.map(id=>{
+    const r = renderSection(SECTIONS[id]); mounts.push(r.mount); return r.html;
+  }).join("");
+  return {html:`
+    <div class="viewhead"><h2>${esc(t.label)}</h2><p>${esc(t.blurb)}</p></div>
+    <div class="grid">${cards}</div>`,
+    mount(){ mounts.forEach(m=>m()); }};
+}
+
+function viewRecovery(){
+  const cid = nextId();
+  const rows = KPIS.map(k=>{
+    const s = SECTIONS[k.sec]; if(!s) return null;
+    const pts = pointsFor(s,k.sid);
+    const base = atYear(pts, META.baselineYear);
+    const last = lastReal(pts);
+    if(!base||!last) return null;
+    return {k, pts, base, last, pct: last.v/base.v};
+  }).filter(Boolean);
+
+  const tbl = rows.map(r=>{
+    const p = (r.pct*100);
+    const cls = p>=100?"up":p>=90?"flat":"down";
+    return `<tr><td>${esc(r.k.label)}</td>
+      <td>${fmtBig(r.base.v)}</td><td>${fmtBig(r.last.v)}</td>
+      <td><b class="${cls}">${nf1.format(p)}</b></td></tr>`;
+  }).join("");
+
+  return {html:`
+    <div class="viewhead"><h2>Recovery vs ${META.baselineYear}</h2>
+      <p>Every headline measure indexed to ${META.baselineYear} = 100. Above 100 means the
+         diocese is past its pre-pandemic level; below means it has not yet returned.
+         This is the comparison a year-over-year figure hides.</p></div>
+    <div class="card wide">
+      <div class="chartbox tall"><canvas id="${cid}"></canvas></div>
+      <div class="tablewrap short"><table class="dt"><thead>
+        <tr><th>Measure</th><th>${META.baselineYear}</th><th>Latest</th><th>Index</th></tr>
+        </thead><tbody>${tbl}</tbody></table></div>
+    </div>`,
+    mount(){
+      const labels = rows.map(r=>r.k.label);
+      const vals = rows.map(r=>r.pct*100);
+      const c = new Chart(document.getElementById(cid),{
+        type:"bar",
+        data:{labels,datasets:[{data:vals,
+          backgroundColor:vals.map(v=>v>=100?css("--good"):css("--bad")),
+          borderRadius:4,borderSkipped:false,maxBarThickness:30}]},
+        options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},
+            tooltip:{backgroundColor:css("--navy-deep"),padding:10,cornerRadius:8,
+              callbacks:{label:c=>nf1.format(c.parsed.x)+" (index, "+META.baselineYear+"=100)"}}},
+          scales:{
+            x:{beginAtZero:true,grid:{color:css("--grid"),drawTicks:false},border:{display:false},
+               ticks:{color:css("--muted"),font:{size:11}}},
+            y:{grid:{display:false},border:{color:css("--axis")},
+               ticks:{color:css("--muted"),font:{size:11}}}}}
+      });
+      CHARTS.set(cid,c);
+    }};
+}
+
+function viewRepresentation(){
+  const cid1 = nextId(), cid2 = nextId();
+  const pops = ["Boards","Clergy","Staff","Supervisors","CMV Team"];
+  const genderSecs = Object.values(SECTIONS).filter(s=>s.dimension==="gender");
+  const ethSecs    = Object.values(SECTIONS).filter(s=>s.dimension==="ethnicity");
+
+  const years = [...new Set(genderSecs.flatMap(s=>s.rows.map(r=>r.period)))]
+    .sort((a,b)=>(+a)-(+b));
+
+  function seriesFor(secs, pick){
+    return pops.map((p,i)=>{
+      const s = secs.find(x=>x.population===p);
+      if(!s) return null;
+      const byYear = {};
+      s.rows.forEach(r=>{ byYear[r.period] = pick(r); });
+      return {label:p, data:years.map(y=>byYear[y]===undefined?null:byYear[y]),
+              _format:"percent1",
+              borderColor:seriesColor(i), backgroundColor:seriesColor(i),
+              borderWidth:2, tension:.25, pointRadius:4, pointHoverRadius:6,
+              pointBorderWidth:2, pointBorderColor:css("--card"), spanGaps:false};
+    }).filter(Boolean);
+  }
+  const women = seriesFor(genderSecs, r=>numOf(r.values.women));
+  // Clergy publishes a POC total; the others are Asian + Black + Latino.
+  const poc = seriesFor(ethSecs, r=>{
+    if(numOf(r.values.poc)!==null) return numOf(r.values.poc);
+    const parts = ["asian","black","latino"].map(k=>numOf(r.values[k]));
+    return parts.some(v=>v===null) ? null : parts.reduce((a,b)=>a+b,0);
+  });
+
+  const legend = pops.map((p,i)=>
+    `<span class="chip on"><i style="background:${seriesColor(i)}"></i>${esc(p)}</span>`).join("");
+
+  const opts = () => ({
+    responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+    plugins:{legend:{display:false},
+      tooltip:{backgroundColor:css("--navy-deep"),padding:10,cornerRadius:8,
+        callbacks:{label:c=>c.dataset.label+": "+(c.parsed.y===null?"no data":nf1.format(c.parsed.y*100)+"%")}}},
+    scales:{x:{grid:{display:false},border:{color:css("--axis")},
+               ticks:{color:css("--muted"),font:{size:11}}},
+            y:{grid:{color:css("--grid"),drawTicks:false},border:{display:false},
+               ticks:{color:css("--muted"),font:{size:11},maxTicksLimit:6,
+                      callback:v=>Math.round(v*100)+"%"}}}
+  });
+
+  return {html:`
+    <div class="viewhead"><h2>Representation</h2>
+      <p>Gender and ethnicity across the five populations the workbook tracks, on one
+         axis each. In the spreadsheet these sit in ten separate blocks, so the gap
+         between who serves on staff and who is canonically resident clergy is not
+         visible anywhere.</p></div>
+    <div class="legend" style="margin-bottom:14px">${legend}</div>
+    <div class="grid">
+      <section class="card"><div class="card-head"><div style="flex:1">
+        <h3>Women, as a share of each group</h3></div>
+        <div class="card-actions"><span class="tag">Diversity</span></div></div>
+        <div class="chartbox"><canvas id="${cid1}"></canvas></div></section>
+      <section class="card"><div class="card-head"><div style="flex:1">
+        <h3>People of color, as a share of each group</h3>
+        <p class="card-sub">Asian + Black + Latino; clergy uses the workbook's own POC total</p></div>
+        <div class="card-actions"><span class="tag">Diversity</span></div></div>
+        <div class="chartbox"><canvas id="${cid2}"></canvas></div></section>
+    </div>
+    <div class="card wide" style="margin-top:16px">
+      <div class="note plain"><span class="ico">ℹ</span><div>
+        The CMV team has 7–9 members and supervisors around 20–25, so a single
+        person moves those lines by 4–14 points. Read them as small-sample
+        indicators, not rates.</div></div>
+    </div>`,
+    mount(){
+      const c1 = new Chart(document.getElementById(cid1),
+        {type:"line",data:{labels:years,datasets:women},options:opts()});
+      const c2 = new Chart(document.getElementById(cid2),
+        {type:"line",data:{labels:years,datasets:poc},options:opts()});
+      CHARTS.set(cid1,c1); CHARTS.set(cid2,c2);
+    }};
+}
+
+function viewNotes(){
+  const groups = {methodology:[],definition:[],covid:[],coverage:[],estimate:[]};
+  Object.values(SECTIONS).forEach(s=>{
+    (s.caveats||[]).forEach(c=>{ (groups[c.type]||(groups[c.type]=[])).push({s,c}); });
+  });
+  const TITLES = {
+    methodology:["Counting method changed","The way something was counted changed partway through the series, so a jump or drop may not be a real change in the world."],
+    definition:["Definition changed","What the number measures changed — including metrics whose tracking simply began in a given year."],
+    covid:["Pandemic disruption","2020–2022 broke these series. Compare to 2019 as well as to last year."],
+    coverage:["Partial or missing collection","Not everyone reported, or the figure covers only part of a period."],
+    estimate:["Estimated values","Figures the workbook marks as estimates."]
+  };
+  const tracked = Object.values(SECTIONS).filter(s=>s.trackingStart);
+
+  const blocks = Object.entries(groups).filter(([,v])=>v.length).map(([k,v])=>{
+    const [title,blurb] = TITLES[k]||[k,""];
+    return `<section class="card wide">
+      <div class="card-head"><div style="flex:1"><h3>${esc(title)}</h3>
+        <p class="card-sub">${esc(blurb)}</p></div>
+        <div class="card-actions"><span class="tag">${v.length}</span></div></div>
+      <div class="notes" style="border-top:none;padding-top:6px">
+      ${v.map(({s,c})=>`<div class="note ${esc(c.type)}"><span class="ico">${
+        CAVEAT_ICON[c.type]||"ℹ"}</span><div>
+        <a href="#" data-goto="${esc(s.id)}"><b>${esc(s.title)}</b></a>
+        ${c.period?` <span class="per">(${esc(c.period)})</span>`:""} — ${esc(c.text)}
+        </div></div>`).join("")}
+      </div></section>`;
+  }).join("");
+
+  return {html:`
+    <div class="viewhead"><h2>Data Notes &amp; Caveats</h2>
+      <p>Every footnote, tracking-start date, and methodology change from the workbook,
+         in one place. Worth five minutes before any target gets written down.</p></div>
+    <div class="card wide" style="margin-bottom:16px">
+      <div class="card-head"><div style="flex:1"><h3>Metrics whose tracking began mid-series</h3>
+      <p class="card-sub">Zeros recorded before these years mean "not collected", not "none".
+        They are shown as untracked rather than plotted at zero.</p></div></div>
+      <div class="tablewrap short"><table class="dt"><thead>
+        <tr><th>Metric</th><th>Tab</th><th>Tracking began</th></tr></thead><tbody>
+        ${tracked.map(s=>`<tr><td><a href="#" data-goto="${esc(s.id)}">${esc(s.title)}</a></td>
+          <td style="text-align:left">${esc(s.tab)}</td><td>${esc(s.trackingStart)}</td></tr>`).join("")}
+      </tbody></table></div>
+    </div>
+    <div class="grid">${blocks}</div>`,
+    mount(){}};
+}
+
+/* =====================================================================
+   6. Router, nav, search
+   ===================================================================== */
+
+const VIEWS = {
+  overview:      {label:"Overview",       make:viewOverview},
+  recovery:      {label:"Recovery",       make:viewRecovery},
+  representation:{label:"Representation", make:viewRepresentation},
+  notes:         {label:"Data Notes",     make:viewNotes}
+};
+
+let current = "overview";
+
+function go(view, scrollToSection){
+  current = view;
+  destroyCharts();
+  const mk = VIEWS[view] ? VIEWS[view].make : () => viewTheme(view);
+  const r = mk();
+  const main = document.getElementById("main");
+  main.innerHTML = r.html;
+  r.mount();
+  document.querySelectorAll("nav.tabs button").forEach(b=>
+    b.classList.toggle("on", b.dataset.view===view));
+  if(scrollToSection){
+    const el = document.getElementById("card-"+scrollToSection);
+    if(el){
+      el.scrollIntoView({behavior:"smooth", block:"center"});
+      el.style.transition="box-shadow .3s";
+      el.style.boxShadow="0 0 0 2px "+css("--gold");
+      setTimeout(()=>{el.style.boxShadow="";},1800);
+    }
+  }else{
+    window.scrollTo({top:0});
+  }
+}
+
+function gotoSection(sid){
+  const s = SECTIONS[sid]; if(!s) return;
+  go(s.theme, sid);
+}
+
+document.addEventListener("click", e=>{
+  const v = e.target.closest("[data-goto-view]");
+  if(v){ e.preventDefault(); go(v.dataset.gotoView); return; }
+  const g = e.target.closest("[data-goto]");
+  if(g){ e.preventDefault(); gotoSection(g.dataset.goto); }
+});
+
+// Nav uses short labels so all fourteen fit without scrolling; the view
+// heading carries the full name.
+const NAV_SHORT = {
+  reach:"Reach", growth:"Growth", planting:"Planting", pipeline:"Pipeline",
+  congleadership:"Cong. Leadership", formation:"Formation", support:"Support",
+  diversity:"Diversity", comms:"Comms", finance:"Finance"
+};
+
+function buildNav(){
+  const nav = document.getElementById("nav");
+  const items = [
+    {view:"overview", label:"Overview"},
+    ...THEMES.map(t=>({view:t.id, label:NAV_SHORT[t.id]||t.label})),
+    {view:"recovery", label:"vs "+META.baselineYear},
+    {view:"representation", label:"Representation"},
+    {view:"notes", label:"Data Notes"}
+  ];
+  nav.innerHTML = items.map(i=>
+    `<button data-view="${esc(i.view)}">${esc(i.label)}</button>`).join("");
+  nav.addEventListener("click", e=>{
+    const b = e.target.closest("button"); if(b) go(b.dataset.view);
+  });
+}
+
+// ---- search -----------------------------------------------------------
+let INDEX = [];
+function buildIndex(){
+  INDEX = Object.values(SECTIONS).map(s=>({
+    id:s.id, title:s.title, tab:s.tab,
+    theme:(THEMES.find(t=>t.id===s.theme)||{}).label||"",
+    hay:[s.title,s.subtitle,s.tab,...(s.series||[]).map(x=>x.label),
+         ...(s.notes||[])].join(" ").toLowerCase()
+  }));
+}
+function runSearch(q){
+  const pop = document.getElementById("qpop");
+  const term = q.trim().toLowerCase();
+  if(!term){ pop.classList.remove("open"); return; }
+  const hits = INDEX.filter(x=>x.hay.includes(term)).slice(0,12);
+  pop.innerHTML = hits.length
+    ? hits.map(h=>`<button class="srch-opt" data-goto="${esc(h.id)}">${esc(h.title)}
+        <small>${esc(h.theme)} · ${esc(h.tab)} tab</small></button>`).join("")
+    : `<div class="srch-empty">No metric matches “${esc(q)}”</div>`;
+  pop.classList.add("open");
+}
+document.getElementById("q").addEventListener("input", e=>runSearch(e.target.value));
+document.getElementById("q").addEventListener("keydown", e=>{
+  if(e.key==="Escape"){ e.target.value=""; document.getElementById("qpop").classList.remove("open"); }
+});
+document.addEventListener("click", e=>{
+  if(!e.target.closest(".srch")) document.getElementById("qpop").classList.remove("open");
+  if(e.target.closest(".srch-opt")) document.getElementById("q").value="";
+});
+
+// ---- theme ------------------------------------------------------------
+document.getElementById("themeBtn").addEventListener("click", ()=>{
+  const cur = document.documentElement.getAttribute("data-theme");
+  const next = cur==="dark" ? "light" : cur==="light" ? "dark"
+    : (matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark");
+  document.documentElement.setAttribute("data-theme", next);
+  try{ localStorage.setItem("vto.theme", next); }catch(e){}
+  go(current);                                  // re-render so charts re-read colors
+});
+try{
+  const saved = localStorage.getItem("vto.theme");
+  if(saved) document.documentElement.setAttribute("data-theme", saved);
+}catch(e){}
+
+document.getElementById("printBtn").addEventListener("click", ()=>window.print());
+
+/* =====================================================================
+   7. Boot
+   ===================================================================== */
+
+function boot(data){
+  DATA = data;
+  META = data.meta;
+  THEMES = data.themes;
+  data.sections.forEach(s=>{ SECTIONS[s.id] = s; });
+
+  if(META.schemaVersion !== 1){
+    alert("This dashboard expects data schema version 1 but the file is version "
+      + META.schemaVersion + ". Rebuild the page or regenerate the data.");
+  }
+  document.getElementById("hdrSub").textContent =
+    META.reportingYear + " Goal Setting · data through " + META.latestDataYear;
+
+  Chart.defaults.font.family =
+    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+  Chart.defaults.font.size = 11;
+
+  buildNav();
+  buildIndex();
+  go("overview");
+}
+</script>
+</body>
+</html>
